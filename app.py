@@ -4,9 +4,11 @@ from flask import Response
 # from bs4 import BeautifulSoup
 # from flask_restful import Resource, Api
 
+import asyncio
+
 import numpy as np
 import cv2
-import winsound
+
 
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 #https://github.com/Itseez/opencv/blob/master/data/haarcascades/haarcascade_eye.xml
@@ -15,37 +17,36 @@ face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 cap = cv2.VideoCapture(0)
 
 
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+cap.set(cv2.CAP_PROP_FPS, 10)
+
+
 def cv_video():
-    global cap
-    ret, frame = cap.read()
-    # ret, frame = cap.read()
-    ret, buffer = cv2.imencode('.jpeg',frame)
-    frame = buffer.tobytes()  
-
-
-    ret, frame = cap.read()
-
-    while ret:
-        # Process the frame
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-
-        for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-
-        # Encode the processed frame as a JPEG image
-        _, buffer = cv2.imencode('.jpeg', frame)
-        frame_bytes = buffer.tobytes()
-
-        
-        # Clean up the buffer
-        del buffer
-
-        # Yield the frame as a byte stream with appropriate headers
-        yield (b'--frame\r\n' b'Content-type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-
+    while True:
         ret, frame = cap.read()
-    cap.release()
+
+        if ret:
+            # Process the frame
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+            for (x, y, w, h) in faces:
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+            # Encode the processed frame as a JPEG image
+            _, buffer = cv2.imencode('.jpeg', frame)
+            frame_bytes = buffer.tobytes()
+
+            # Yield the frame as a byte stream with appropriate headers
+            yield (b'--frame\r\n' b'Content-type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+            # Clean up the buffer
+            del buffer
+
+        # await asyncio.sleep(0.1) # Adjust the delay as needed
+        # ret, frame = cap.read()
+    # cap.release()
 
 
 
@@ -94,6 +95,10 @@ def video_feed():
     return Response(cv_video(), mimetype= 'multipart/x-mixed-replace; boundary=frame')
 
 
+# @app.route('/video_feed')
+# def video_feed():
+#     return Response(cv_video(), mimetype= 'multipart/x-mixed-replace; boundary=frame')
+
 
 
 
@@ -104,10 +109,14 @@ def video_feed():
 #############################################################
     
 if __name__ == "__main__":
+
+    # loop = asyncio.get_event_loop()
+    # loop.run_until_complete(asyncio.gather(cv_video()))
+
     app.run(host='0.0.0.0', port='5000')
 
 
-
+#https://stackoverflow.com/questions/39724687/bootstrap-tabs-without-anchors
 
 # import cv2
 # import numpy
