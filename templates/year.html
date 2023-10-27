@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>21st Century Volcanic Eruptions</title>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon/favicon-16x16.png">
+    <link rel="manifest" href="/static/images/favicon/site.webmanifest">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
+    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+    crossorigin="" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"
+    integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
+    crossorigin=""></script>
+
+    <!-- Bootstrap stylesheet -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+    
+
+    <!-- My CSS -->
+    <link rel="stylesheet" type="text/css" href="static/css/stylesheet.css">
+    <!-- D3 Library -->
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+
+</head>
+
+<body>
+
+      <!-- navbar -->
+      <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href={{ url_for("index") }}>
+            <img src="static/images/volcano.png" width="40" height="40" class="d-inline-block align-top" alt="">
+            Explore Eruptions
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            
+            <li class="nav-item">
+                <a class="nav-link" href={{ url_for("ServeVolcano") }}>Volcano Type</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href=#>Year Ranges</a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href={{ url_for("makeGraph") }}>Graphs</a>
+            </li>
+            </ul>
+        </div>
+    </nav>
+   
+    <!-- Cards  -->
+    <div class="container data-cards">
+        
+        <!-- Row 1 -->
+        <div class="row">
+          
+            <!-- Column 1 -->
+            <div class="col-sm-4">               
+                                
+                <!-- id=drop-down-card -->
+                <div class="card text-center border-0" id="drop-down-card">   
+                    <div class="card-header border-0" id="white-header">                        
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Year Ranges</h5>                        
+                        <select id="selectYear" onchange="newYearSelected(this.value)">                       
+                        </select>
+                        <br><br>
+                        <div class="img text-center" id="image-rotator">                            
+                            <!-- put rotating imgs here -->
+                        </div>
+                    </div>
+                </div>                 
+            </div>
+
+            <!-- Column 2 -->
+            <div class="col-sm-8">
+                
+                <!-- id=data-card -->
+                <div class="card text-center" id="data-card">   
+                    <div class="card-header">   
+                        <h5 class="heading">Data</h5>                        
+                    </div>
+                    <div class="card-body">                                           
+                                                                    
+                        <div id="data-table"></div>                                                          
+                    </div>
+                    <div class="card-footer text-muted">
+                        <a href="https://www.ncei.noaa.gov/maps/hazards/" class="btn btn-primary">Explore NOAA's Interactive Map! <span class="badge bg-secondary"> External Resource</span></a>
+                    </div>
+                </div>                                    
+                
+            </div>           
+
+        </div>
+
+        <!-- Row 2 -->
+        <div class="row">            
+
+            <!-- Column 1 -->
+            <div class="col-sm">
+
+                <!-- id=volcanoes-by-country-card -->
+                <div class="card text-center" id="volcanoes-by-country-card">   
+                    <div class="card-header">     
+                        <h5>Volcanoes by Country</h5>                   
+                    </div>     
+                    <div class="card-body">        
+                                        
+                        <div id="volcanoes-by-country-hbarchart"></div>
+                    </div>
+                </div>
+            </div>          
+
+        </div>
+
+
+         
+        <!-- Row 3 -->
+        <div class="row">     
+            
+            <!-- Column 1 -->
+            <div class="col-sm">
+
+                <!-- id=morph-card -->
+                <div class="card text-center" id="morph-card">        
+                    <div class="card-header">   
+                        <h5>Morphology</h5>                     
+                    </div>
+                    <div class="card-body">
+                                                
+                        <div id="morph-piechart"></div>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Column 2 -->
+             <div class="col-sm">
+           
+                <!-- id=vei-card -->
+                <div class="card text-center" id="vei-card">        
+                    <div class="card-header">     
+                        <h5>Volcanoes by VEI</h5>                   
+                    </div>
+                    <div class="card-body">      
+                        
+                        <div id="vei-piechart"></div>
+                    </div>
+                </div>
+            </div>             
+
+        </div>
+
+        <!-- Row 4 -->
+        <div class="row">   
+
+            <!-- Column 1 -->
+            <div class="col-sm">           
+                <!-- id=eruptions-card -->
+                <div class="card text-center" id="eruptions-card">                
+                    <div class="card-header">     
+                        <h5>Number of Eruptions</h5>                   
+                    </div>
+                    <div class="card-body">                              
+                        <div id="eruptions-linechart"></div>
+                    </div>
+                </div>                
+            </div> 
+
+        </div>        
+         
+    </div>
+
+    <!-- D3 Library -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="/static/js/year.js"></script>  
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
+
+</body>
+
+</html>

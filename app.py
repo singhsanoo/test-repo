@@ -1,0 +1,265 @@
+from json import dumps
+from flask import Flask, make_response, render_template, jsonify, send_file
+from flask import Response
+import pandas as pd
+import requests
+from werkzeug.datastructures import Headers
+import etl
+from bs4 import BeautifulSoup
+from flask_restful import Resource, Api
+
+# adding new comment
+
+# Access NOAA API and return pandas dataframe for year range selected 
+
+def call_api(year):
+    global df
+    the_json = (requests.get("https://www.ngdc.noaa.gov/hazel/hazard-service/api/v1/volcanoes?maxYear=2022&minYear=2000")).json()
+    empty_df = pd.DataFrame(columns=["id","name","country","year","morphology","vei","deathsTotal",\
+                    "missingTotal","injuriesTotal","damageMillionsDollarsTotal",\
+                    "housesDestroyedTotal"])
+
+    try:     
+        df = pd.DataFrame(data=the_json["items"])
+        df = df[["id","name","country","year","morphology","vei","deathsTotal",\
+                    "missingTotal","injuriesTotal","damageMillionsDollarsTotal",\
+                    "housesDestroyedTotal"]]
+    except:        
+        print("Error making dataframe")                            
+        return empty_df
+
+    # Define Year Range Dataframes
+
+    df_dict = {}
+
+    try:          
+        df_2000_2022 = df.copy()
+        df_2000_2022.index.name = "2000-2022"
+        df_dict[df_2000_2022.index.name] = df_2000_2022
+
+        df_2000_2011 = df.loc[((df["year"]>=2000) & (df["year"]<=2011)), :]
+        df_2000_2011.index.name = "2000-2011"
+        df_dict[df_2000_2011.index.name] = df_2000_2011
+
+        df_2012_2022 = df.loc[((df["year"]>=2012) & (df["year"]<=2022)), :]
+        df_2012_2022.index.name = "2012-2022"        
+        df_dict[df_2012_2022.index.name] = df_2012_2022
+
+        df_2000_2004 = df.loc[((df["year"]>=2000) & (df["year"]<=2004)), :]
+        df_2000_2004.index.name = "2000-2004"
+        df_dict[df_2000_2004.index.name] = df_2000_2004
+
+        df_2005_2009 = df.loc[((df["year"]>=2005) & (df["year"]<=2009)), :]
+        df_2005_2009.index.name = "2005-2009"
+        df_dict[df_2005_2009.index.name] = df_2005_2009
+
+        df_2010_2014 = df.loc[((df["year"]>=2010) & (df["year"]<=2014)), :]
+        df_2010_2014.index.name = "2010-2014"
+        df_dict[df_2010_2014.index.name] = df_2010_2014
+
+        df_2015_2019 = df.loc[((df["year"]>=2015) & (df["year"]<=2019)), :]
+        df_2015_2019.index.name = "2015-2019"
+        df_dict[df_2015_2019.index.name] = df_2015_2019
+
+        df_2020_2022 = df.loc[((df["year"]>=2020) & (df["year"]<=2022)), :]
+        df_2020_2022.index.name = "2020-2022"
+        df_dict[df_2020_2022.index.name] = df_2020_2022
+
+    except: 
+        print("Error making dataframe")                            
+        return empty_df
+
+    year_range_list = df_dict.keys() 
+    
+    if year in year_range_list:
+        
+        return df_dict[year]
+
+    else:
+
+        print("Error finding year range")                            
+        return empty_df
+
+# Make sure year range selection is valid
+
+def validate_year(year):    
+    if year in ["2000-2022", "2000-2011", "2012-2022", "2000-2004",\
+        "2005-2009", "2010-2014", "2015-2019", "2020-2022"]:
+        return year
+
+    else:
+        return "2000-2022"     
+
+#############################################################
+# BEGIN FLASK ROUTING
+#############################################################
+
+app = Flask(__name__)
+app.config["JSON_SORT_KEYS"] = False
+app.config["SEND_FILE_MAX_PAGE_DEFAULT"] = 0
+
+#############################################################
+# Index endpoint
+#############################################################
+
+@app.route("/")
+def index():
+    etl.load()
+    return render_template("index.html")     
+
+#############################################################
+
+@app.route("/map")
+def map():
+    return render_template("map.html")
+
+@app.route("/new")
+def new():
+    return render_template("new.html")
+
+@app.route("/volcano")
+def ServeVolcano():
+   return render_template("volcano.html")
+
+@app.route("/year")
+def ServeYear():
+   return render_template("year.html")
+
+#############################################################
+
+@app.route("/readmongodb")
+def ReadMongoDB():
+    data = etl.fetch()
+    return jsonify(data)
+
+@app.route("/volcanoes_by_year/<year>")
+def volcanoes_by_year(year):
+    global df
+    df = call_api(validate_year(year))       
+    vol_by_yr = df.groupby("year")["id"].count().to_dict()
+    
+    return jsonify(vol_by_yr)     
+
+@app.route("/volcanos_by_country/<year>")
+def volcanos_by_country(year):
+    global df
+    df = call_api(validate_year(year))  
+    vol_by_ctry = df.groupby(["country"])["id"].count().sort_values(ascending=False).to_dict()
+
+    return jsonify(vol_by_ctry)
+
+@app.route("/volcanos_by_morphology/<year>")
+def volcanos_by_morphology(year):
+    global df
+    df = call_api(validate_year(year))
+    vol_by_morph = df.groupby(["morphology"])["id"].count().sort_values(ascending=False).to_dict()
+
+    return jsonify(vol_by_morph)
+
+@app.route("/volcanos_by_vei/<year>")
+def volcanos_by_vei(year):
+    global df
+    df = call_api(validate_year(year))    
+    vol_by_vei = df.groupby(["vei"])["id"].count().sort_values(ascending=False).to_dict()
+
+    return jsonify(vol_by_vei)
+
+@app.route("/summary_data/<year>")
+def summary_data(year):
+    global df
+    df = call_api(validate_year(year))
+    deaths = round(df["deathsTotal"].sum())
+    injuries = round(df["injuriesTotal"].sum())
+    houses = round(df["housesDestroyedTotal"].sum())
+    damages = round(df["damageMillionsDollarsTotal"].sum())*1_000_000
+
+    summ_data = {"Deaths": "{:0,}".format(deaths), "Injuries": "{:0,}".format(injuries), 
+                 "Houses Destroyed": "{:0,}".format(houses), "Damages": "${:0,}".format(damages)}
+
+    return jsonify(summ_data)
+
+@app.route("/graphs")
+def makeGraph():
+    return render_template("graphs.html")
+
+
+#############################################################
+# Trial FLASK ROUTING
+#############################################################
+@app.route("/downloadPage", methods=['GET', 'POST'])
+def downloadPage():
+    return render_template("download.html") 
+
+# @app.route("/downloadPage/downloadApp")
+# # @app.route("/downloadPage/downloadApp/Dental Practice Monitor.application")
+# def downloadApp():
+#     path = '//DESKTOP-J5LBP92/Users/Testing/publish/Dental Practice Monitor.application'
+#     return send_file(path, as_attachment=True)
+
+# @app.route("/downloadPage/downloadApp/Dental Practice Monitor.application")
+# def downloadApp1():
+#     path = '//DESKTOP-J5LBP92/Users/Testing/publish/Dental Practice Monitor.application'
+#     return send_file(path, as_attachment=True)
+
+# @app.route("/downloadPage/downloadApp/")
+import requests
+@app.route('/downloadPage/downloadApp/<path:dynamic_path>')
+# @app.route("/downloadPage/downloadApp/Application Files/Dental Practice Monitor_1_0_0_1/Dental Practice Monitor.dll.manifest", methods = ['GET'] )
+def downloadApp2(dynamic_path):
+    path = '//DESKTOP-J5LBP92/Users/Testing/publish/Application Files/Dental Practice Monitor_1_0_0_0/Dental Practice Monitor.dll.manifest'
+    
+    # with open(path, 'r', encoding="cp1252") as file:
+    #     content = file.read()
+    # Set appropriate headers for the response
+    response_headers = {
+        'Content-Type': 'application/octet-stream',  # Set the content type as a binary stream
+        'Content-Disposition': 'attachment; filename=Dental Practice Monitor.dll.manifest'  # Specify the filename for download
+    }
+
+    # return send_file(path, content_type='application/manifest', download_name='Dental Practice Monitor.dll.manifest', headers=response_headers)
+    # return send_file(path, as_attachment=True, download_name='Dental Practice Monitor.dll.manifest', headers=response_headers)
+    # return Response("/downloadPage/downloadApp/Application Files/Dental Practice Monitor_1_0_0_1/Dental Practice Monitor.dll.manifest")
+
+
+    response = make_response(send_file(path, as_attachment=True, download_name='Dental Practice Monitor.dll.manifest'))
+    response.headers['Content-Type'] = 'application/octet-stream'
+    response.headers['Content-Disposition'] = 'attachment; filename=Dental Practice Monitor.dll.manifest'
+
+    return response
+
+    # return Response(content, content_type='')
+    # return jsonify(content)
+    # return send_file(path, as_attachment=True,)
+                    #  content_type='application/manifest')
+    # return(dynamic_path)
+
+
+
+################
+# class Test(Resource):
+#     api = Api(app)
+#     # @api.representation('application/xml')
+#     @app.route("/downloadPage/downloadApp/Application Files/Dental Practice Monitor_1_0_0_1/Dental Practice Monitor.dll.manifest", methods = ['GET'] )
+#     def downloadApp2():
+#         path = '//DESKTOP-J5LBP92/Users/Testing/publish/Application Files/Dental Practice Monitor_1_0_0_0/Dental Practice Monitor.dll.manifest'
+        
+#         # with open(path, 'r', encoding="cp1252") as file:
+#         #     content = file.read()
+#         # # return Response(content)
+#         # # return Response("/downloadPage/downloadApp/Application Files/Dental Practice Monitor_1_0_0_1/Dental Practice Monitor.dll.manifest")
+
+#         # return Response(content, content_type='')
+#         # return jsonify(content)
+#         # return send_file(path, as_attachment=True)
+#         resp = make_response(dumps({'response' : data}), code)
+#         resp.headers.extend(Headers or {})
+#         return resp
+
+
+
+#############################################################
+# END FLASK ROUTING
+#############################################################
+    
+if __name__ == "__main__":
+    app.run(host='192.168.0.22', port='5002')
