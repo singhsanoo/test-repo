@@ -29,19 +29,19 @@ def index():
 
 @app.route("/opt1")
 def new1():
-    return redirect("/", code=302)
-    # return render_template("map.html")
+    return redirect("/", code=302)    
+    # return render_template("map.html")    http://127.0.0.1:5000/opt1
+
+# @app.route("/opt2")
+# def new2():
+#     return render_template("new.html")
 
 @app.route("/opt2")
 def new2():
-    return render_template("new.html")
+   return render_template("volcano.html")
 
 @app.route("/opt3")
 def new3():
-   return render_template("volcano.html")
-
-@app.route("/opt4")
-def new4():
    return render_template("year.html")
 
 #############################################################
