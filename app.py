@@ -4,6 +4,49 @@ from flask import Response
 # from bs4 import BeautifulSoup
 # from flask_restful import Resource, Api
 
+import numpy as np
+import cv2
+import winsound
+
+face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+#https://github.com/Itseez/opencv/blob/master/data/haarcascades/haarcascade_eye.xml
+# eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+
+cap = cv2.VideoCapture(0)
+
+
+def cv_video():
+    global cap
+    ret, frame = cap.read()
+    # ret, frame = cap.read()
+    ret, buffer = cv2.imencode('.jpeg',frame)
+    frame = buffer.tobytes()  
+
+
+    ret, frame = cap.read()
+
+    while ret:
+        # Process the frame
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+        for (x, y, w, h) in faces:
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+        # Encode the processed frame as a JPEG image
+        _, buffer = cv2.imencode('.jpeg', frame)
+        frame_bytes = buffer.tobytes()
+
+        
+        # Clean up the buffer
+        del buffer
+
+        # Yield the frame as a byte stream with appropriate headers
+        yield (b'--frame\r\n' b'Content-type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+        ret, frame = cap.read()
+    cap.release()
+
 
 
 
@@ -46,8 +89,9 @@ def new3():
 
 #############################################################
 
-
-
+@app.route('/video_feed')
+def video_feed():
+    return Response(cv_video(), mimetype= 'multipart/x-mixed-replace; boundary=frame')
 
 
 
@@ -61,3 +105,35 @@ def new3():
     
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port='5000')
+
+
+
+
+# import cv2
+# import numpy
+# from flask import Flask, render_template, Response, stream_with_context, Request
+
+# video = cv2.VideoCapture(0)
+# app = Flask(__name__)
+
+# def video_stream():
+#     while(True):
+#         ret, frame = video.read()
+#         if not ret:
+#             break
+#         else:
+#             ret, buffer = cv2.imencode('.jpeg',frame)
+#             frame = buffer.tobytes()
+#             yield (b'--frame\r\n' b'Content-type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+# @app.route('/siteTest')
+
+# def siteTest():
+#     return render_template('siteTest.html')
+
+# @app.route('/video_feed')
+
+# def video_feed():
+#     return Response(video_stream(), mimetype= 'multipart/x-mixed-replace; boundary = frame')
+
+# app.run(host ='0.0.0.0', port= '5000', debug=False)

@@ -33,6 +33,19 @@
         <!-- D3 Library -->
         <!-- <script src="https://d3js.org/d3.v5.min.js"></script> -->
 
+        <!-- <meta name="viewport" content="width = device-width, initial-scale=1">
+        <style>
+            img {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            h1 {
+                text-align: center;
+            }
+        </style> -->
+
     </head>
 
     <body>
@@ -55,16 +68,16 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
                     <li class="nav-item">
-                        <a class="nav-link" href={{ url_for("new2") }}>Volcano Type</a>
+                        <a class="nav-link" href='{{ url_for("new2") }}'>Volcano Type</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href={{ url_for("new3") }}>Year Ranges</a>
+                        <a class="nav-link" href='{{ url_for("new3") }}'>Year Ranges</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href=#>Graphs</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href={{ url_for("new1") }}>Download</a>
+                        <a class="nav-link" href="{{ url_for('new1') }}">Download</a>
                     </li>
 
                 </ul>
@@ -79,7 +92,7 @@
             </div>
             <div class="row">
                 <div class="col-md-4 mt-4 mb-3 ms-3">
-                    <p>This site showcases data relating to significant volcanic eruptions that have occured between
+                    <!-- <p>This site showcases data relating to significant volcanic eruptions that have occured between
                         2000 and 2022. As defined by the <a href="https://www.ngdc.noaa.gov/">NOAA National Centers for
                             Environmental Information</a>, a significant eruption meets at least one of the following:
                     <ul>
@@ -92,7 +105,9 @@
                         (VEI)</a> is a relative measure of the explosiveness of eruptions that goes from 0 at the lowest
                     and 8 at the highest.
                     It's a logarithmic scale that looks at how much volcanic material is ejecected, to what height, and
-                    how long the eruption lasts.</p>
+                    how long the eruption lasts.</p> -->
+
+                    <img id="bg" src="{{ url_for('video_feed') }}" style="width: 88%;">
 
                 </div>
                 <div class="col-md-7 mb-3 mt-3 ms-3">
