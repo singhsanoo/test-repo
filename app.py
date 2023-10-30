@@ -49,7 +49,27 @@ def cv_video():
     # cap.release()
 
 
+def cv_video1():
+    while True:
+        ret, frame = cap.read()
 
+        if ret:
+            # Process the frame
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+            # for (x, y, w, h) in faces:
+            #     cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+            # Encode the processed frame as a JPEG image
+            _, buffer = cv2.imencode('.jpeg', frame)
+            frame_bytes = buffer.tobytes()
+
+            # Yield the frame as a byte stream with appropriate headers
+            yield (b'--frame\r\n' b'Content-type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+
+            # Clean up the buffer
+            # del buffer
 
 
 #############################################################
@@ -90,9 +110,13 @@ def new3():
 
 #############################################################
 
-@app.route('/video_feed')
-def video_feed():
+@app.route('/video_feed1')
+def video_feed1():
     return Response(cv_video(), mimetype= 'multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/video_feed2')
+def video_feed2():
+    return Response(cv_video1(), mimetype= 'multipart/x-mixed-replace; boundary=frame')
 
 
 # @app.route('/video_feed')

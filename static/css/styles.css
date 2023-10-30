@@ -1,14 +1,26 @@
-.navbar {
-  /* padding: 5%; */
-  /* color: #a60b0a;
+.nav-pills {
+  --bs-nav-pills-border-radius: var(--bs-border-radius);
+  --bs-nav-pills-link-active-color: #fff;
+  --bs-nav-pills-link-active-bg: darkgrey;
+  --bs-nav-link-color: secondary;
+}
+
+.video-title {
+  color: Secondary;
+  text-align: left;
+  margin: left 2pc;
+}
+
+/* .navbar { */
+/* padding: 5%; */
+/* color: #a60b0a;
   font-size: x-large; */
-  /* padding-top: 20px;
+/* padding-top: 20px;
   padding-bottom: 20px;
   margin-right: 40; */
-  /* background-color: light; */
 
-  /* size: auto; */
-}
+/* size: auto; */
+/* } */
 
 /* .collaspe {
   background-color: lightgray;
@@ -24,10 +36,7 @@
   font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
 }
 
-.nav-link {
-  color: #a60b0a;
-  font-size: large;
-} */
+
 
 /* #time {
   margin: 10px 10%;
